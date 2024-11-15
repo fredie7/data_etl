@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgresdb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  python-etl:
+    build: . # Current directory => 'app' directory
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/postgresdb
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app # Mount the current directory ('app') to '/app' inside the container
+    # command: ["python", "load_to_postgres.py"]
+    command:
+      [
+        "./wait-for-it.sh",
+        "postgres:5432",
+        "--",
+        "python",
+        "/app/load_to_postgres.py",
+      ]
+
+volumes:
+  postgres_data:
+    driver: local
